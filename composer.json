@@ -1,0 +1,50 @@
+{
+    "name": "ykan/elastickit-laravel",
+    "description": "Laravel integration for ElasticKit: client bootstrapping and native pagination.",
+    "keywords": ["elasticsearch", "elastickit", "laravel", "dsl", "query", "builder"],
+    "license": "MIT",
+    "type": "library",
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "require": {
+        "php": "^8.1",
+        "ykan/elastickit": "^8.0.0-beta.5",
+        "elasticsearch/elasticsearch": "^8.0",
+        "illuminate/contracts": "^10.0|^11.0|^12.0",
+        "illuminate/support": "^10.0|^11.0|^12.0",
+        "illuminate/pagination": "^10.0|^11.0|^12.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^11.5",
+        "orchestra/testbench": "^10.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "ElasticKit\\Laravel\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "ElasticKit\\Laravel\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "ElasticKit\\Laravel\\ElasticKitServiceProvider"
+            ]
+        }
+    },
+    "authors": [
+        {
+            "name": "ykan",
+            "email": "smykggi@gmail.com"
+        }
+    ],
+    "scripts": {
+        "test": "phpunit"
+    },
+    "config": {
+        "sort-packages": true
+    }
+}
