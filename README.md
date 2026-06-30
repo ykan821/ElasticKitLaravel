@@ -53,14 +53,21 @@ class ProductIndex extends Index
     protected string $name = 'products';
 }
 
-// explicit pagination
-$paginator = ProductIndex::query()
-    ->match('title', 'shoes')
-    ->paginate($page, $perPage)   // or ->paginate() to read from the request
-    ->get()
-    ->toPaginator();
+// compound bool query, paginated → native Laravel LengthAwarePaginator
+$results = ProductIndex::query()
+    ->bool([
+        'must'   => fn ($q) => $q->match('title', 'shoes'),
+        'filter' => fn ($q) => $q
+            ->range('price', [10, 100])
+            ->when($status, fn ($q) => $q->term('status', $status))  // conditional clause
+            ->term('status', 'published'),
+    ])
+    ->highlight('title')
+    ->sort('price', 'asc')
+    ->paginate($page, $perPage);   // or ->paginate() to read from the request
 
-$paginator->links();   // standard Laravel pagination UI
+$results->total();                 // hit count
+$results->toPaginator()->links();  // native Laravel pagination UI
 ```
 
 ## Artisan commands

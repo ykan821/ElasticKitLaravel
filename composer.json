@@ -8,15 +8,15 @@
     "prefer-stable": true,
     "require": {
         "php": "^8.1",
-        "ykan/elastickit": "^8.0.0-beta.5",
+        "ykan/elastickit": "^8.0.0",
         "elasticsearch/elasticsearch": "^8.0",
         "illuminate/contracts": "^10.0|^11.0|^12.0",
         "illuminate/support": "^10.0|^11.0|^12.0",
         "illuminate/pagination": "^10.0|^11.0|^12.0"
     },
     "require-dev": {
-        "phpunit/phpunit": "^11.5",
-        "orchestra/testbench": "^10.0"
+        "phpunit/phpunit": "^10.5 || ^11.0",
+        "orchestra/testbench": "^8.0 || ^9.0 || ^10.0"
     },
     "autoload": {
         "psr-4": {
