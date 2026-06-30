@@ -93,16 +93,120 @@ Pass an Index class FQCN, or optionally map short aliases in `config/elastickit.
 
 | Command | Description | Options |
 |---|---|---|
-| `php artisan elastickit:rebuild products` | Build a new backing index, import via `Index::source()`, swap the alias | `--clean`, `--batch-size=`, `--allow-empty` |
+| `php artisan elastickit:rebuild products` | Build a new backing index, import via `Index::source()`, swap the alias | `--clean`, `--batch-size=`, `--allow-empty`, `--context=` |
 | `php artisan elastickit:rebuild:rollback products <backing>` | Point the alias back at a previous backing index | — |
 | `php artisan elastickit:rebuild:clean products <backing>` | Delete a leftover backing index | `--force` |
 | `php artisan elastickit:rebuild:unlock products` | Release a lock left by a crashed rebuild | — |
 
 `--clean` removes the previous backing index right after the swap.
 
+**Passing context to `source()`**
+
+`--context=key=value` (repeatable) is forwarded to `Index::source()` as an associative array —
+handy for incremental or filtered rebuilds. Values are strings; cast inside `source()`:
+
+```
+php artisan elastickit:rebuild products --context=since=2026-06-01 --context=limit=1000
+```
+
+```php
+public function source(array $context = []): iterable
+{
+    $query = Product::query();
+    if ($since = $context['since'] ?? null) {
+        $query->where('updated_at', '>', $since);
+    }
+    if ($limit = $context['limit'] ?? null) {
+        $query->limit((int) $limit);
+    }
+    foreach ($query->cursor() as $p) {
+        yield $p->id => $p->toArray();
+    }
+}
+```
+
 > Prefer `elastickit:rebuild` for first-time setup if you ever want zero-downtime
 > rebuilds: it bootstraps via an alias, while `index:create` makes a plain index that
 > `rebuild` cannot swap.
+
+**Handling import errors**
+
+By default, a bulk import error aborts the rebuild (the new backing index is deleted). To
+customize — skip failed items, log them, or retry — set `rebuild.on_error` in the published
+config to an invokable class:
+
+```php
+// config/elastickit.php
+'rebuild' => [
+    'on_error' => \App\Search\ImportErrorHandler::class,
+],
+```
+
+```php
+// app/Search/ImportErrorHandler.php
+use ElasticKit\Index\Bulk;
+
+class ImportErrorHandler
+{
+    public function __invoke(array $response, array $actions, Bulk $newbulk): void
+    {
+        foreach ($response['items'] ?? [] as $item) {
+            if (isset($item['index']['error'])) {
+                logger('elastickit import failed', ['id' => $item['index']['_id'] ?? null]);
+            }
+        }
+        // return → drop the failed items and continue
+        // throw  → abort the rebuild
+        // re-send on $newbulk, then $newbulk->flush() → retry
+    }
+}
+```
+
+**Per-index handlers**
+
+For index-specific error handling, implement `HasRebuildErrorHandler` on the Index subclass —
+it overrides the global `rebuild.on_error` for that index only:
+
+```php
+use ElasticKit\Index\Bulk;
+use ElasticKit\Index\Index;
+use ElasticKit\Laravel\Console\HasRebuildErrorHandler;
+
+class ProductIndex extends Index implements HasRebuildErrorHandler
+{
+    protected string $name = 'products';
+
+    public function rebuildErrorHandler(): callable
+    {
+        return function (array $response, array $actions, Bulk $newbulk): void {
+            // per-index logic; same contract as the global handler
+        };
+    }
+}
+```
+
+**Replacing the rebuild command**
+
+To take over the `elastickit:rebuild` name entirely (custom `handle()`, extra options, etc),
+set `rebuild.command` to a `RebuildCommand` subclass — the provider registers yours instead of
+its default:
+
+```php
+// config/elastickit.php
+'rebuild' => [
+    'command' => \App\Console\Commands\CustomRebuildCommand::class,
+],
+```
+
+```php
+use ElasticKit\Laravel\Console\RebuildCommand;
+
+class CustomRebuildCommand extends RebuildCommand
+{
+    // inherit the elastickit:rebuild signature; override handle().
+    // stopIndicator() and parseContext() are protected — reuse them from your handle().
+}
+```
 
 ## Configuration
 
@@ -116,6 +220,10 @@ class ArchiveIndex extends Index
     protected string $connection = 'archive';
 }
 ```
+
+## Todo
+
+- [ ] Documentation sync — Eloquent auto-sync (`IndexesTo`) model trait.
 
 ## License
 

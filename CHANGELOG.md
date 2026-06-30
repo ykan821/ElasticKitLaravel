@@ -5,6 +5,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+- `elastickit:rebuild` shows a spinner during import (TTY only) and reports the imported-doc count on completion.
+- Rebuild `onError` handler can be set via the `elastickit.rebuild.on_error` config key (invokable class-string or callable) — no command subclassing needed.
+- Per-index rebuild error handlers: an Index subclass implementing `HasRebuildErrorHandler` declares its own handler, overriding the global config for that index.
+- `elastickit:rebuild` accepts repeatable `--context=key=value` options, forwarded to `Index::source()` via `Rebuild::run($context)`.
+- The `elastickit:rebuild` command can be replaced via the `elastickit.rebuild.command` config key (a `RebuildCommand` subclass); the provider registers it instead of the default, so a custom command occupies the same name.
+- `RebuildCommand`'s `stopIndicator()` and `parseContext()` are now `protected` (were `private`) — non-BC widening, so subclasses overriding `handle()` reuse the built-in spinner teardown and context parsing.
+
 ## [v1.0.0-beta.1] - 2026-06-30
 
 ### Added

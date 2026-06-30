@@ -23,18 +23,18 @@ class ServiceProviderTest extends TestCase
         return [ElasticKitServiceProvider::class];
     }
 
-    public function test_default_client_is_registered(): void
+    public function testDefaultClientIsRegistered(): void
     {
         $this->assertInstanceOf(ClientInterface::class, ClientManager::get('default'));
     }
 
-    public function test_pagination_resolvers_are_registered(): void
+    public function testPaginationResolversAreRegistered(): void
     {
         $this->assertNotNull(Pagination::getPageResolver());
         $this->assertNotNull(Pagination::getPaginatorResolver());
     }
 
-    public function test_registered_page_resolver_extracts_from_request(): void
+    public function testRegisteredPageResolverExtractsFromRequest(): void
     {
         $this->app->instance(Request::class, Request::create('/', 'GET', ['page' => 3, 'per_page' => 20]));
 

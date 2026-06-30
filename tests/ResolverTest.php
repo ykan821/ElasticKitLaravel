@@ -21,7 +21,7 @@ class ResolverTest extends TestCase
         $this->bindRequest([]);
     }
 
-    public function test_paginator_resolver_returns_laravel_paginator(): void
+    public function testPaginatorResolverReturnsLaravelPaginator(): void
     {
         Pagination::setPaginatorResolver(LaravelPagination::paginatorResolver('page'));
 
@@ -44,7 +44,7 @@ class ResolverTest extends TestCase
         $this->assertCount(2, $paginator->items());
     }
 
-    public function test_page_resolver_reads_page_and_per_page_from_request(): void
+    public function testPageResolverReadsPageAndPerPageFromRequest(): void
     {
         $this->bindRequest(['page' => '3', 'per_page' => '10']);
 
@@ -54,14 +54,14 @@ class ResolverTest extends TestCase
         $this->assertSame(10, $perPage);
     }
 
-    public function test_page_resolver_falls_back_to_default_per_page(): void
+    public function testPageResolverFallsBackToDefaultPerPage(): void
     {
         [, $perPage] = (LaravelPagination::pageResolver(15))();
 
         $this->assertSame(15, $perPage);
     }
 
-    public function test_page_resolver_clamps_page_below_one(): void
+    public function testPageResolverClampsPageBelowOne(): void
     {
         $this->bindRequest(['page' => '0']);
 

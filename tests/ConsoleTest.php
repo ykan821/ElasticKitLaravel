@@ -17,28 +17,28 @@ class ConsoleTest extends TestCase
         return [ElasticKitServiceProvider::class];
     }
 
-    public function test_resolver_resolves_fqcn(): void
+    public function testResolverResolvesFqcn(): void
     {
         $index = app(IndexResolver::class)->resolve(StubIndex::class);
 
         $this->assertInstanceOf(StubIndex::class, $index);
     }
 
-    public function test_resolver_resolves_alias_from_config(): void
+    public function testResolverResolvesAliasFromConfig(): void
     {
         config(['elastickit.indices' => ['stub' => StubIndex::class]]);
 
         $this->assertInstanceOf(StubIndex::class, app(IndexResolver::class)->resolve('stub'));
     }
 
-    public function test_resolver_throws_for_unknown(): void
+    public function testResolverThrowsForUnknown(): void
     {
         $this->expectException(RuntimeException::class);
 
         app(IndexResolver::class)->resolve('No\Such\Index');
     }
 
-    public function test_commands_are_registered(): void
+    public function testCommandsAreRegistered(): void
     {
         $commands = Artisan::all();
 

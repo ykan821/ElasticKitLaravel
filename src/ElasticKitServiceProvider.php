@@ -39,8 +39,10 @@ class ElasticKitServiceProvider extends ServiceProvider
                 'elastickit-config'
             );
 
+            // elastickit:rebuild may be overridden via config (a RebuildCommand
+            // subclass), so a custom command occupies the name instead of the default.
             $this->commands([
-                RebuildCommand::class,
+                config('elastickit.rebuild.command') ?: RebuildCommand::class,
                 RebuildCleanCommand::class,
                 RebuildRollbackCommand::class,
                 RebuildUnlockCommand::class,

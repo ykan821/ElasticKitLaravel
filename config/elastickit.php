@@ -64,4 +64,23 @@ return [
         'default_per_page' => 15,
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Rebuild
+    |--------------------------------------------------------------------------
+    | on_error: an invokable class-string (or any callable) forwarded to
+    |   Rebuild::onError() when a bulk import batch has errors. The handler
+    |   receives (array $response, array $actions, Bulk $newbulk). Return to
+    |   drop the failed items and continue, throw to abort, or re-import on
+    |   $newbulk to retry. null (default) aborts on the first error.
+    */
+    'rebuild' => [
+        'on_error' => null,
+
+        // Custom Artisan command class for elastickit:rebuild — must extend
+        // ElasticKit\Laravel\Console\RebuildCommand and keep the command name.
+        // null uses the package default.
+        'command' => null,
+    ],
+
 ];
