@@ -13,6 +13,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - The `elastickit:rebuild` command can be replaced via the `elastickit.rebuild.command` config key (a `RebuildCommand` subclass); the provider registers it instead of the default, so a custom command occupies the same name.
 - `RebuildCommand`'s `stopIndicator()` and `parseContext()` are now `protected` (were `private`) — non-BC widening, so subclasses overriding `handle()` reuse the built-in spinner teardown and context parsing.
 
+### Changed
+- Elasticsearch clients are now built lazily on first use (per connection) instead of during application boot. The provider registers a lightweight proxy (`LazyClient`) for each configured connection.
+
+### Fixed
+- A misconfigured connection (`cloud_id` / `retries` / …) no longer crashes application boot or artisan. The error now surfaces with the connection name the first time that connection is used.
+- An empty `elastickit.connections` map now fails fast at boot with a clear message, instead of deferring the failure to a generic runtime error.
+
 ## [v1.0.0-beta.1] - 2026-06-30
 
 ### Added

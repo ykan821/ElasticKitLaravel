@@ -19,6 +19,7 @@ use ElasticKit\Laravel\Console\RebuildRollbackCommand;
 use ElasticKit\Laravel\Console\RebuildUnlockCommand;
 use ElasticKit\Laravel\Pagination\LaravelPagination;
 use Illuminate\Support\ServiceProvider;
+use RuntimeException;
 
 /**
  * Bootstraps ElasticKit inside a Laravel app: registers one Elasticsearch
@@ -64,8 +65,22 @@ class ElasticKitServiceProvider extends ServiceProvider
      */
     private function registerClients(): void
     {
-        foreach ((array) config('elastickit.connections', []) as $name => $cfg) {
-            Index::setClient($this->buildClient((array) $cfg), (string) $name);
+        $connections = (array) config('elastickit.connections', []);
+
+        if ($connections === []) {
+            throw new RuntimeException(
+                'No elastickit connections configured. '
+                . 'Define at least a "default" entry in config("elastickit.connections").'
+            );
+        }
+
+        foreach ($connections as $name => $cfg) {
+            $cfg = (array) $cfg;
+            $name = (string) $name;
+            Index::setClient(
+                new LazyClient($name, fn () => $this->buildClient($cfg)),
+                $name
+            );
         }
     }
 

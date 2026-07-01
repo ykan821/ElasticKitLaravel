@@ -9,6 +9,7 @@ use ElasticKit\Index\Support\ClientManager;
 use ElasticKit\Index\Support\Pagination;
 use ElasticKit\Laravel\ElasticKitServiceProvider;
 use Illuminate\Http\Request;
+use RuntimeException;
 
 /**
  * Boots the provider via testbench and asserts it wires ElasticKit up.
@@ -42,5 +43,40 @@ class ServiceProviderTest extends TestCase
 
         $this->assertSame(3, $page);
         $this->assertSame(20, $perPage);
+    }
+
+    public function testRegisterClientsFailsFastOnEmptyConnections(): void
+    {
+        config(['elastickit.connections' => []]);
+
+        $provider = new ElasticKitServiceProvider($this->app);
+        $register = new \ReflectionMethod($provider, 'registerClients');
+        $register->setAccessible(true);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('No elastickit connections configured');
+
+        $register->invoke($provider);
+    }
+
+    public function testMisconfiguredConnectionDefersErrorUntilUse(): void
+    {
+        config(['elastickit.connections' => ['default' => ['retries' => -1]]]);
+
+        $provider = new ElasticKitServiceProvider($this->app);
+        $register = new \ReflectionMethod($provider, 'registerClients');
+        $register->setAccessible(true);
+
+        // registerClients must NOT throw — the client is built lazily.
+        $register->invoke($provider);
+
+        $client = ClientManager::get('default');
+        $this->assertInstanceOf(ClientInterface::class, $client);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage("connection 'default'");
+
+        // First use triggers the factory → setRetries(-1) throws.
+        $client->info();
     }
 }
