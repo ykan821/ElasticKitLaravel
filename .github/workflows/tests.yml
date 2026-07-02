@@ -40,7 +40,14 @@ jobs:
         run: composer require "orchestra/testbench:^${{ matrix.testbench }}" --no-update --no-interaction
 
       - name: Install dependencies
-        run: composer update --prefer-dist --no-interaction
+        run: |
+          # The compat matrix installs old Laravel 10/11; testbench 8/9 constrain
+          # laravel/framework to ranges whose only satisfiable versions carry
+          # security advisories that composer (2.9+) blocks at resolution time.
+          # Disable the block for this compat-test install only — it is CI-scoped
+          # (modifies the ephemeral checkout) and ships to no consumer.
+          composer config --no-interaction policy.advisories.block false
+          composer update --prefer-dist --no-interaction
 
       - name: Run tests
         run: vendor/bin/phpunit
